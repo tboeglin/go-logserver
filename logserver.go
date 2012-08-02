@@ -7,9 +7,6 @@ import (
 )
 
 func main() {
-    // init logger
-	handlers.Init()
-
     // handlers
     http.HandleFunc("/log", handlers.HandleLogPost)
     http.HandleFunc("/stats", handlers.HandleStats)

@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"sync"
 )
 
 // we'll use a global channel for the logging goroutine to read from
@@ -14,7 +13,6 @@ var (
     // send channels to get data from through this one
     request_chan <-chan (chan<- []string)
 	requests uint64
-	once     sync.Once
 )
 
 func logFromChan() {
@@ -27,15 +25,11 @@ func logFromChan() {
 	}
 }
 
-func initModule() {
+func init() {
 	// init the global log_chan and its reader
 	log_chan = make(chan string)
     request_chan = make(<-chan (chan<- []string))
 	go logFromChan()
-}
-
-func Init() {
-	once.Do(initModule)
 }
 
 func HandleStats(rw http.ResponseWriter, r *http.Request) {
