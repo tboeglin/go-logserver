@@ -22,10 +22,10 @@ func init() {
 	log_chan = make(chan string)
     request_chan = make(<-chan (chan<- []string))
     logs = ring.New(1000)
-	go logFromChan()
+	go loggerRoutine()
 }
 
-func logFromChan() {
+func loggerRoutine() {
 	var li string
 	for {
 		li = <-log_chan
