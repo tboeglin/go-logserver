@@ -8,12 +8,6 @@ import (
 	"sync"
 )
 
-type LogInfo struct {
-	Source   string
-	Severity string
-	Message  string
-}
-
 // we'll use a global channel for the logging goroutine to read from
 var (
 	log_chan chan string
