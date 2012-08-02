@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"container/ring"
 )
 
 // we'll use a global channel for the logging goroutine to read from
@@ -13,7 +14,16 @@ var (
     // send channels to get data from through this one
     request_chan <-chan (chan<- []string)
 	requests uint64
+    logs *ring.Ring
 )
+
+func init() {
+	// init the global log_chan and its reader
+	log_chan = make(chan string)
+    request_chan = make(<-chan (chan<- []string))
+    logs = ring.New(1000)
+	go logFromChan()
+}
 
 func logFromChan() {
 	var li string
@@ -23,13 +33,6 @@ func logFromChan() {
 		//inc the global counter
 		requests += 1
 	}
-}
-
-func init() {
-	// init the global log_chan and its reader
-	log_chan = make(chan string)
-    request_chan = make(<-chan (chan<- []string))
-	go logFromChan()
 }
 
 func HandleStats(rw http.ResponseWriter, r *http.Request) {
