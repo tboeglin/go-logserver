@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -17,16 +16,18 @@ type LogInfo struct {
 
 // we'll use a global channel for the logging goroutine to read from
 var (
-	log_chan chan LogInfo
+	log_chan chan string
+    // send channels to get data from through this one
+    request_chan <-chan (chan<- []string)
 	requests uint64
 	once     sync.Once
 )
 
 func logFromChan() {
-	var li LogInfo
+	var li string
 	for {
 		li = <-log_chan
-		log.Printf("LOG [%s] from %s: %s", li.Severity, li.Source, li.Message)
+        log.Printf("LOG \"%s\"", li)
 		//inc the global counter
 		requests += 1
 	}
@@ -34,7 +35,8 @@ func logFromChan() {
 
 func initModule() {
 	// init the global log_chan and its reader
-	log_chan = make(chan LogInfo)
+	log_chan = make(chan string)
+    request_chan = make(<-chan (chan<- []string))
 	go logFromChan()
 }
 
@@ -67,14 +69,7 @@ func HandleLogPost(rw http.ResponseWriter, r *http.Request) {
         rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	var li LogInfo
-	err = json.Unmarshal(payload, &li)
-	if err != nil {
-		log.Printf("could not decode json \"%s\"", payload)
-        rw.WriteHeader(http.StatusBadRequest)
-		return
-	}
 	// send it to the logger
-	log_chan <- li
+	log_chan <- string(payload)
     rw.WriteHeader(http.StatusOK)
 }
