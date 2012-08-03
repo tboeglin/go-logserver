@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"logserver/handlers"
-    "loghandler"
+    "github.com/tboeglin/go-loggers/rotatingfile"
 	"net/http"
 )
 
