@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"container/ring"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -82,23 +83,35 @@ func HandleStats(rw http.ResponseWriter, r *http.Request) {
 }
 
 func HandleLogPost(rw http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-        log.Printf("handleLogPost: got an non-POST request from %s\n", r.RemoteAddr)
-        rw.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
+	switch r.Method {
 	//try decoding the payload as json
-	var (
-		payload []byte
-		err     error
-	)
-	payload, err = ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Printf("could not get body from request?!")
-        rw.WriteHeader(http.StatusInternalServerError)
-		return
+	case "POST":
+		var (
+			payload []byte
+			err     error
+		)
+		payload, err = ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Printf("could not get body from request?!")
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		// send it to the logger
+		log_chan <- string(payload)
+		rw.WriteHeader(http.StatusOK)
+	case "GET":
+		var logs_json []byte
+		logs_chan := make(chan []byte)
+		request_chan <- logs_chan
+		logs_json = <-logs_chan
+		rw.Header().Add("Content-Type", "application/json")
+		_, err := rw.Write(logs_json)
+		if err != nil {
+			log.Printf("Could not send back json: %s\n", err.Error())
+		}
+
+	default:
+		log.Printf("handleLogPost: got an non POST/GET request from %s\n", r.RemoteAddr)
+		rw.WriteHeader(http.StatusMethodNotAllowed)
 	}
-	// send it to the logger
-	log_chan <- string(payload)
-    rw.WriteHeader(http.StatusOK)
 }
