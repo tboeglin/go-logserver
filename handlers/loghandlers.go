@@ -59,7 +59,7 @@ func loggerRoutine() {
 			//inc the global counter
 			requests += 1
 		case out_chan = <-request_chan:
-			// get the element in a regular list
+			//get a list of elems out of the ring
 			log_len = logs.Len()
 			lst := make([]LogInfo, log_len)
 			var index int = 0
